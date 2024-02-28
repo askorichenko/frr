@@ -326,6 +326,34 @@ void vrf_disable(struct vrf *vrf)
 		(*vrf_master.vrf_disable_hook)(vrf);
 }
 
+/* Disable VRF module. */
+void vrf_disable_all(void)
+{
+        struct vrf *vrf, *tmp;
+
+        if (debug_vrf)
+                zlog_debug("%s:  vrf subsystem", __func__);
+
+        RB_FOREACH_SAFE (vrf, vrf_id_head, &vrfs_by_id, tmp) {
+                if (vrf->vrf_id == VRF_DEFAULT)
+                        continue;
+
+                vrf_disable(vrf);
+        }
+
+        RB_FOREACH_SAFE (vrf, vrf_name_head, &vrfs_by_name, tmp) {
+                if (vrf->vrf_id == VRF_DEFAULT)
+                        continue;
+
+                vrf_disable(vrf);
+        }
+
+        /* Finally disable default VRF */
+        vrf = vrf_lookup_by_id(VRF_DEFAULT);
+        if (vrf)
+                vrf_disable(vrf);
+}
+
 const char *vrf_id_to_name(vrf_id_t vrf_id)
 {
 	struct vrf *vrf;

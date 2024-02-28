@@ -204,7 +204,7 @@ static void sigint(void)
 
 	list_delete(&zrouter.client_list);
 
-	vrf_terminate();
+	vrf_disable_all();
 
 	/* Indicate that all new dplane work has been enqueued. When that
 	 * work is complete, the dataplane will enqueue an event
@@ -220,6 +220,8 @@ static void sigint(void)
 void zebra_finalize(struct event *dummy)
 {
 	zlog_info("Zebra final shutdown");
+
+	vrf_terminate();
 
 	/*
 	 * Stop dplane thread and finish any cleanup

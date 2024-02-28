@@ -203,8 +203,11 @@ extern void vrf_init(int (*create)(struct vrf *vrf),
 
 /*
  * Call vrf_terminate when the protocol is being shutdown
+ *     it implements disable() and destroy() hooks
+ * vrf_disable_all does disable() only
  */
 extern void vrf_terminate(void);
+extern void vrf_disable_all(void);
 
 /*
  * Utilities to create networks objects,
