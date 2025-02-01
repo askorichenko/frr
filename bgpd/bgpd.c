@@ -3412,12 +3412,27 @@ static struct bgp *bgp_create(as_t *as, const char *name,
 	afi_t afi;
 	safi_t safi;
 
-	if (hidden) {
+	if (hidden)
 		bgp = bgp_old;
-		goto peer_init;
-	}
+	else
+		bgp = XCALLOC(MTYPE_BGP, sizeof(struct bgp));
 
-	bgp = XCALLOC(MTYPE_BGP, sizeof(struct bgp));
+	bgp->as = *as;
+	if (bgp->as_pretty)
+		XFREE(MTYPE_BGP_NAME, bgp->as_pretty);
+	if (as_pretty)
+		bgp->as_pretty = XSTRDUP(MTYPE_BGP_NAME, as_pretty);
+	else
+		bgp->as_pretty = XSTRDUP(MTYPE_BGP_NAME, asn_asn2asplain(*as));
+
+	if (asnotation != ASNOTATION_UNDEFINED) {
+		bgp->asnotation = asnotation;
+		SET_FLAG(bgp->config, BGP_CONFIG_ASNOTATION);
+	} else
+		asn_str2asn_notation(bgp->as_pretty, NULL, &bgp->asnotation);
+
+	if (hidden)
+		goto peer_init;
 
 	if (BGP_DEBUG(zebra, ZEBRA)) {
 		if (inst_type == BGP_INSTANCE_TYPE_DEFAULT)
@@ -3461,18 +3476,6 @@ static struct bgp *bgp_create(as_t *as, const char *name,
 	bgp->peer = list_new();
 
 peer_init:
-	bgp->as = *as;
-	if (as_pretty)
-		bgp->as_pretty = XSTRDUP(MTYPE_BGP_NAME, as_pretty);
-	else
-		bgp->as_pretty = XSTRDUP(MTYPE_BGP_NAME, asn_asn2asplain(*as));
-
-	if (asnotation != ASNOTATION_UNDEFINED) {
-		bgp->asnotation = asnotation;
-		SET_FLAG(bgp->config, BGP_CONFIG_ASNOTATION);
-	} else
-		asn_str2asn_notation(bgp->as_pretty, NULL, &bgp->asnotation);
-
 	bgp->peer->cmp = (int (*)(void *, void *))peer_cmp;
 	bgp->peerhash = hash_create(peer_hash_key_make, peer_hash_same,
 				    "BGP Peer Hash");
